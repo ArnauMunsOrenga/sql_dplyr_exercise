@@ -324,8 +324,23 @@ tbl(sql_con, "Match") %>% select(country_id) %>% group_by(country_id) %>% count 
 
 ```{r}
 match_db <- tbl_df(dbGetQuery(sql_con,"SELECT * FROM Match"))
+
+"SELECT *
+FROM Match" %>%
+  dbGetQuery(sql_con, .)
+
 country_db <- tbl_df(dbGetQuery(sql_con,"SELECT * FROM Country"))
+
+"SELECT *
+FROM Country" %>%
+  dbGetQuery(sql_con, .)
+
 teams <- tbl_df(dbGetQuery(sql_con,"SELECT * FROM Team"))
+
+"SELECT *
+FROM Team" %>%
+  dbGetQuery(sql_con, .)
+
 ```
 
 
@@ -336,7 +351,24 @@ match_db %>%
   group_by(name) %>%
   summarise(teams = n_distinct(home_team_api_id)) %>%
   arrange(desc(teams))
+
 ```
+
+```{sql connection=sql_con}
+SELECT name 
+, country_id
+, home_team_api_id
+FROM Match
+LEFT JOIN (
+  SELECT *
+  FROM Country) paises
+ON Match.country_id = paises.id
+GROUP BY name
+  
+  
+
+```
+
 
 * List 5 players and their highest rating that had the lowest potential ever.
 
