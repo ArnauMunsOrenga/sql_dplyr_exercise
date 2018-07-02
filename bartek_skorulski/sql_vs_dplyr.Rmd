@@ -13,7 +13,7 @@ Download data `database.sqlite.zip` from  <https://www.kaggle.com/hugomathien/so
 ## Access to data base
 
 ```{r}
-DATA_DIR <- file.path("..", "football_data")
+DATA_DIR <- file.path("..", "football_data") #los dos puntos nos llevan una carpeta encima
 library(RSQLite)
 sql_con <- dbConnect(
   SQLite(), 
@@ -74,6 +74,8 @@ player_db %>%
   group_by(year) %>%
   summarise(height=mean(height, na.rm=TRUE)) %>%
   show_query
+
+#el show_query lo que nos permite es traducir a sql una consulta que hagamos en formato dplyr
 ```
 
 
@@ -207,6 +209,10 @@ player_db %>%
 
 ## Joins
 
+LEFT JOIN -> NOS MANTIENE TODO LO QUE HAYA EN LA TABLA DE LA IZQUIERDA
+
+
+
 ```{sql connection=sql_con}
 SELECT Player.player_name
 , pa.max_rating 
@@ -223,21 +229,32 @@ LIMIT 10
 ...
 
 ```{r}
+
+#aqui nos esta haciendo una lazy query que significa que la query no se ejecuta hasta que no hagamos un head o algo a la tabla que nos guardamos de la consulta
+
+#la consulta no se ejecuta hasta que no le decimos que nos muestre el resultado
+#esto hace que no se tenga que ejecutar cada consulta hasta el final y nos otpimiza el proceso
+
 player_db <- tbl(sql_con, "Player")
 player_attributes_db <- tbl(sql_con, "Player_Attributes")
 
-player_db %>%
+players_rank<-player_db %>%
   left_join(
     {player_attributes_db %>% 
       group_by(player_api_id) %>%
       summarise(max_rating=max(overall_rating, na.rm=TRUE))}, 
     by='player_api_id') %>%
   arrange(-max_rating) %>%
-  select(player_name, max_rating) %>%
-  head(10)
+  select(player_name, max_rating)
+
+  head(players_rank)
 ```
 
 ## UNION All ~ union_all
+
+simplemente lo que nos hace es juntar dos tablas a pelo, aunque haya cosas repetidas, despues podemos filtrar
+por ejemplo si tenemos en una tabla los goles como visitante y en otra los goles como local
+
 
 ```{sql, connection=sql_con}
 SELECT team_api_id
@@ -283,6 +300,12 @@ Exercise
 "SELECT COUNT(1) AS n
 FROM Match" %>%
   dbGetQuery(sql_con, .)
+
+dbListTables(sql_con)
+match_db <- tbl(sql_con, "Match")
+
+match_db %>% count()
+
 ```
 
 
